@@ -1,1 +1,9 @@
-Java8允许我使用关键词·default·对接口增加一个非抽象方法的实现
+Java8允许我使用关键词`default`,对接口增加一个非抽象的方法的实现.这个特性也被称作为`扩展方法`.
+这是第一个例子
+```interface Formula {
+      double calculate(int a);
+       default double sqrt(int a) {
+        return Math.sqrt(a);
+    }
+  }
+  ```
