@@ -1,6 +1,2 @@
 # java8-tutorial
-关于java8学习
-# 主要分为以下几个部分
-* 接口默认方法
-* lambda表达式
-* 函数接口
+java8 tutorial 翻译自http://winterbe.com/posts/2014/03/16/java-8-tutorial/
