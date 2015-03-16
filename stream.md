@@ -167,3 +167,31 @@ Stream.of("d2", "a2", "b1", "b3", "c")
 ```
 在这个例子中，`sorted`从来没有被调用，因为`filter`降低输入集合到一个元素.
 # 重用Streams
+java8 Streams 不能被重用.只要你调用终端操作，流就被关闭.
+```
+Stream<String> stream =
+    Stream.of("d2", "a2", "b1", "b3", "c")
+        .filter(s -> s.startsWith("a"));
+
+stream.anyMatch(s -> true);    // ok
+stream.noneMatch(s -> true);   // exception
+```
+在同一个流中调用`ongMatch`在`anyMatch`之后将导致下面异常.
+```java
+java.lang.IllegalStateException: stream has already been operated upon or closed
+    at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:229)
+    at java.util.stream.ReferencePipeline.noneMatch(ReferencePipeline.java:459)
+    at com.winterbe.java8.Streams5.test7(Streams5.java:38)
+    at com.winterbe.java8.Streams5.main(Streams5.java:28)
+```
+为了克服这个限制，我们不得不为每个我们希望执行的终端操作创建一个新的流链。例如，我们可以用已经建立的新的中间操作创建一个流生产者来构建一个新的流。
+```java
+Supplier<Stream<String>> streamSupplier =
+    () -> Stream.of("d2", "a2", "b1", "b3", "c")
+            .filter(s -> s.startsWith("a"));
+
+streamSupplier.get().anyMatch(s -> true);   // ok
+streamSupplier.get().noneMatch(s -> true);  // ok
+```
+每次调用`get()`构造一个新的流。
+# 高级操作
