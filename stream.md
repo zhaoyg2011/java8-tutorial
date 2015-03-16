@@ -195,3 +195,97 @@ streamSupplier.get().noneMatch(s -> true);  // ok
 ```
 每次调用`get()`构造一个新的流。
 # 高级操作
+Streams支持很多不同的操作。我们已经学习了绝大部分重要的操作，例如`filter`或者`map`.你可以学习其它重要的操作(see [Stream Javadoc](http://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html)).相反，我们深入更加复杂的操作`collect`,`flatMap`和`reduce`.
+这节大部分的代码用下面的人集合展现。
+```java
+class Person {
+    String name;
+    int age;
+
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+}
+
+List<Person> persons =
+    Arrays.asList(
+        new Person("Max", 18),
+        new Person("Peter", 23),
+        new Person("Pamela", 23),
+        new Person("David", 12));
+```
+* Collect
+Collect是一个特别有用的操作，用来将stream中的元素转化为不同种类的结果，例如 一个`List`,`Set`或者`Map`.Collect接受一个`Collector`,它有4类不同的操作组成:消费者,积累,联合和结束.这个首先听起来就很复杂，但是java8支持内置的收集器通过类`Collectors`类.到目前为止你没有必要自己实现一个收集器.
+我们以一个普通的case开始:
+```java
+List<Person> filtered =
+    persons
+        .stream()
+        .filter(p -> p.name.startsWith("P"))
+        .collect(Collectors.toList());
+
+System.out.println(filtered);    // [Peter, Pamela]
+```
+正如你看到的通过stream中的元素构造一个list是非常简单的.需要一个Set代替List,用`Collectors.toSet()`.
+接下来的例子依据年龄分组Person。
+```java
+Map<Integer, List<Person>> personsByAge = persons
+    .stream()
+    .collect(Collectors.groupingBy(p -> p.age));
+
+personsByAge
+    .forEach((age, p) -> System.out.format("age %s: %s\n", age, p));
+
+// age 18: [Max]
+// age 23: [Peter, Pamela]
+// age 12: [David]
+```
+收集器是特别能干的。你可以创建一个聚集对stream中的元素.例如:计算平均年龄.
+```java
+Double averageAge = persons
+    .stream()
+    .collect(Collectors.averagingInt(p -> p.age));
+
+System.out.println(averageAge);     // 19.0
+```
+如果你对更加全面的统计感兴趣，总计收集器返回一个内置的总计统计类.所以我们可以简单计算最小值，最大值and平均值，同样和和数量.
+```
+IntSummaryStatistics ageSummary =
+    persons
+        .stream()
+        .collect(Collectors.summarizingInt(p -> p.age));
+
+System.out.println(ageSummary);
+// IntSummaryStatistics{count=4, sum=76, min=12, average=19.000000, max=23}
+```
+下面的例子联合所有的Person为一个字符串.
+```
+String phrase = persons
+    .stream()
+    .filter(p -> p.age >= 18)
+    .map(p -> p.name)
+    .collect(Collectors.joining(" and ", "In Germany ", " are of legal age."));
+
+System.out.println(phrase);
+```
+那个join收集器接受一个分隔符，一个可选的前缀和后缀.
+为了将集合中的元素转化为map,我们不得不指定怎样配键值对.记住被配对的键值必须是唯一的，否则`IllegalStateException`被抛出.你可以选择性的通过一个merge函数作为附加的参数来通过异常.
+```java
+ap<Integer, String> map = persons
+    .stream()
+    .collect(Collectors.toMap(
+        p -> p.age,
+        p -> p.name,
+        (name1, name2) -> name1 + ";" + name2));
+
+System.out.println(map);
+// {18=Max, 23=Peter;Pamela, 12=David}
+```
+
+
