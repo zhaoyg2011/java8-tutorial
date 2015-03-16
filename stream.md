@@ -287,5 +287,21 @@ ap<Integer, String> map = persons
 System.out.println(map);
 // {18=Max, 23=Peter;Pamela, 12=David}
 ```
+现在我们知道了一些内置的收集器.我们试着来创建一个我们自己的收集器.我们想将所有流中的person转化为一个字符串，包含所有名字，大写 以`|`隔开.为了完成这个，我们创建一个新的收集器`Collector.of()`.我们需要传递Collector的4个元素:生产者，聚集者，联合者，接受者。
+```java
+Collector<Person, StringJoiner, String> personNameCollector =
+    Collector.of(
+        () -> new StringJoiner(" | "),          // supplier
+        (j, p) -> j.add(p.name.toUpperCase()),  // accumulator
+        (j1, j2) -> j1.merge(j2),               // combiner
+        StringJoiner::toString);                // finisher
 
+String names = persons
+    .stream()
+    .collect(personNameCollector);
+
+System.out.println(names);  // MAX | PETER | PAMELA | DAVID
+```
+因为字符串是不变的。我们需要一个像`StringJoiner`的帮助类来收集构造字符串.
+生产者用相应的分隔符初始化StringJoiner。聚集者用来增加每个person大写名字到StringJoiner。联合者知道怎么合并两个StringJoiner。最后来到终结者从StringJoiner构造我们想要的字符串。
 
