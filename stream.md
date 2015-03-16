@@ -54,4 +54,116 @@ Stream.of("d2", "a2", "b1", "b3", "c")
 // anyMatch: A2
 ```
 当谓词应用在了给定的输入元素，这个操作`anyMatch`返回了`true`。对第二个元素“A2”为真。由于流链的垂直执行，在这种情况下`map`仅仅执行了两次。所以代替对所有流元素执行,`map`将尽可能少被调用.
+# 为什么顺序有重大影响
+下面的例子有两个中间操作`map`和`filter`和终端操作`forEach`.我们再一次审视一下这些操作是怎样被执行的.
+```java
+Stream.of("d2", "a2", "b1", "b3", "c")
+    .map(s -> {
+        System.out.println("map: " + s);
+        return s.toUpperCase();
+    })
+    .filter(s -> {
+        System.out.println("filter: " + s);
+        return s.startsWith("A");
+    })
+    .forEach(s -> System.out.println("forEach: " + s));
 
+// map:     d2
+// filter:  D2
+// map:     a2
+// filter:  A2
+// forEach: A2
+// map:     b1
+// filter:  B1
+// map:     b3
+// filter:  B3
+// map:     c
+// filter:  C
+```
+正如你可能猜到的`map`和`filter`被调用了5次而`forEach`仅仅被调用了一次<br>
+如果我们能够改变操作的顺序，通过移动`filter`至开始的位置,我们能够大量降低实际操作的数量.
+```java
+tream.of("d2", "a2", "b1", "b3", "c")
+    .filter(s -> {
+        System.out.println("filter: " + s);
+        return s.startsWith("a");
+    })
+    .map(s -> {
+        System.out.println("map: " + s);
+        return s.toUpperCase();
+    })
+    .forEach(s -> System.out.println("forEach: " + s));
+
+// filter:  d2
+// filter:  a2
+// map:     a2
+// forEach: A2
+// filter:  b1
+// filter:  b3
+// filter:  c
+```
+现在`map`仅仅被调用一次，所以对大数目的输入元素，操作管道也执行更快.记住联合复杂方法链的时机.
+我们扩展一下上面的例子，增加一个操作`sorted`.
+```java
+Stream.of("d2", "a2", "b1", "b3", "c")
+    .sorted((s1, s2) -> {
+        System.out.printf("sort: %s; %s\n", s1, s2);
+        return s1.compareTo(s2);
+    })
+    .filter(s -> {
+        System.out.println("filter: " + s);
+        return s.startsWith("a");
+    })
+    .map(s -> {
+        System.out.println("map: " + s);
+        return s.toUpperCase();
+    })
+    .forEach(s -> System.out.println("forEach: " + s));
+```
+排序是一个特殊的中间操作.他是所谓的有状态的操作，因为为了排序一个集合中的元素，你必须在排序中保持状态.
+执行这个例子导致了下面的输出:
+```
+sort:    a2; d2
+sort:    b1; a2
+sort:    b1; d2
+sort:    b1; a2
+sort:    b3; b1
+sort:    b3; d2
+sort:    c; b3
+sort:    c; d2
+filter:  a2
+map:     a2
+forEach: A2
+filter:  b1
+filter:  b3
+filter:  c
+filter:  d2
+```
+首先，排序操作被执行在整个集合上.换句话说，排序被垂直操作.所以在这种情况下，`sorted`被调用8次。
+马上我们可以再次靠调序操作链来优化性能.
+```java
+Stream.of("d2", "a2", "b1", "b3", "c")
+    .filter(s -> {
+        System.out.println("filter: " + s);
+        return s.startsWith("a");
+    })
+    .sorted((s1, s2) -> {
+        System.out.printf("sort: %s; %s\n", s1, s2);
+        return s1.compareTo(s2);
+    })
+    .map(s -> {
+        System.out.println("map: " + s);
+        return s.toUpperCase();
+    })
+    .forEach(s -> System.out.println("forEach: " + s));
+
+// filter:  d2
+// filter:  a2
+// filter:  b1
+// filter:  b3
+// filter:  c
+// map:     a2
+// forEach: A2
+```
+在这个例子中，`sorted`从来没有被调用，因为`filter`降低输入集合到一个元素.
+# 重用Streams
