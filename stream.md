@@ -318,3 +318,25 @@ persons
     .ifPresent(System.out::println);    // Pamela
 ```
 `reduce`方法接受一个`BinaryOperator`累加函数.那是一个真正的`BiFunction`，两个操作符分享同样的类型.在这个案例中是`Person`。`BiFunction`像`Function`,但是必须接受两个参数.示例函数比较两个人的年龄，选择其中一个较大年龄的.
+第二个`reduce`方法接受一个身份值（a identity value）和一个`BinayOperator`累计器.这个方法能够用来被构造一个新的Person，利用流中所有其他的人聚合的年龄和姓名。
+```java
+Person result =
+    persons
+        .stream()
+        .reduce(new Person("", 0), (p1, p2) -> {
+            p1.age += p2.age;
+            p1.name += p2.name;
+            return p1;
+        });
+
+System.out.format("name=%s; age=%s", result.name, result.age);
+// name=MaxPeterPamelaDavid; age=76
+```
+第三个`reduce`方法接受三个参数:一个身份值，一个`BiFunctioni`聚集器和联合函数`BinaryOperator`。因为身份值没有被限制为`Person`类型.我们能够利用计算所有人的年龄总和.
+```java
+Integer ageSum = persons
+    .stream()
+    .reduce(0, (sum, p) -> sum += p.age, (sum1, sum2) -> sum1 + sum2);
+
+System.out.println(ageSum);  // 76
+```
