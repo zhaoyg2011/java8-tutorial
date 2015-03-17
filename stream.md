@@ -385,4 +385,12 @@ Integer ageSum = persons
 在并发中执行同样的流将导致完全不同的行为.现在联合函数被真正调用.因为在并发中累计函数被调用，联合需要汇总各自累积的结果值.
 在下面的章节中，我们继续深入并发流.
 # 并发流
-
+* 并发线程数依赖可用的物理CPU核数.
+```java
+ForkJoinPool commonPool = ForkJoinPool.commonPool();
+System.out.println(commonPool.getParallelism());    // 3
+```
+* 可以通过参数修改并发数
+```java
+-Djava.util.concurrent.ForkJoinPool.common.parallelism=5
+```
