@@ -340,3 +340,49 @@ Integer ageSum = persons
 
 System.out.println(ageSum);  // 76
 ```
+正如你看到的结果为76.底层真正发生什么了？我们扩展一下上面的例子.
+```java
+Integer ageSum = persons
+    .stream()
+    .reduce(0,
+        (sum, p) -> {
+            System.out.format("accumulator: sum=%s; person=%s\n", sum, p);
+            return sum += p.age;
+        },
+        (sum1, sum2) -> {
+            System.out.format("combiner: sum1=%s; sum2=%s\n", sum1, sum2);
+            return sum1 + sum2;
+        });
+
+// accumulator: sum=0; person=Max
+// accumulator: sum=18; person=Peter
+// accumulator: sum=41; person=Pamela
+// accumulator: sum=64; person=David
+```
+你可以看到联合函数没有工作.首先带着初始值0被调用,第一个人是Max.接下来三个步骤`sum`继续通过最后几个人增加直至总年龄76.
+联合从来没有被调用.在并发中执行同样的流将揭开秘密.
+```java
+Integer ageSum = persons
+    .parallelStream()
+    .reduce(0,
+        (sum, p) -> {
+            System.out.format("accumulator: sum=%s; person=%s\n", sum, p);
+            return sum += p.age;
+        },
+        (sum1, sum2) -> {
+            System.out.format("combiner: sum1=%s; sum2=%s\n", sum1, sum2);
+            return sum1 + sum2;
+        });
+
+// accumulator: sum=0; person=Pamela
+// accumulator: sum=0; person=David
+// accumulator: sum=0; person=Max
+// accumulator: sum=0; person=Peter
+// combiner: sum1=18; sum2=23
+// combiner: sum1=23; sum2=12
+// combiner: sum1=41; sum2=35
+```
+在并发中执行同样的流将导致完全不同的行为.现在联合函数被真正调用.因为在并发中累计函数被调用，联合需要汇总各自累积的结果值.
+在下面的章节中，我们继续深入并发流.
+# 并发流
+
