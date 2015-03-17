@@ -287,7 +287,11 @@ ap<Integer, String> map = persons
 System.out.println(map);
 // {18=Max, 23=Peter;Pamela, 12=David}
 ```
-现在我们知道了一些内置的收集器.我们试着来创建一个我们自己的收集器.我们想将所有流中的person转化为一个字符串，包含所有名字，大写 以`|`隔开.为了完成这个，我们创建一个新的收集器`Collector.of()`.我们需要传递Collector的4个元素:生产者，聚集者，联合者，接受者。
+现在我们知道了一些内置的收集器.我们试着来创建一个我们自己的收集器.我们想将所有流中的person转化为一个字符串，包含所有名字，大写 以`|`隔开.为了完成这个，我们创建一个新的收集器`Collector.of()`.我们需要传递Collector的4个元素:生产者，聚集者，联合者，终结者。
+* 生产者:创建一个新的结果容器;
+* 聚集者:合并新的数据元素到结果容器;
+* 联合者:合并两个结果容器到一个;（在并发流才可能调用）
+* 终结者:在容器上执行一个可选的最终转化。
 ```java
 Collector<Person, StringJoiner, String> personNameCollector =
     Collector.of(
