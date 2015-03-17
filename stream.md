@@ -308,4 +308,13 @@ System.out.println(names);  // MAX | PETER | PAMELA | DAVID
 ```
 因为字符串是不变的。我们需要一个像`StringJoiner`的帮助类来收集构造字符串.
 生产者用相应的分隔符初始化StringJoiner。聚集者用来增加每个person大写名字到StringJoiner。联合者知道怎么合并两个StringJoiner。最后来到终结者从StringJoiner构造我们想要的字符串。
-
+* FlatMap
+* Reduce
+归纳操作是联合流中的所有元素至一个唯一的结果.java 8 支持不同种类的`reduce`方法.第一个是归纳流中的元素到一个确切的元素.我们来看一下用这个方法来判断最老的人.
+```java
+persons
+    .stream()
+    .reduce((p1, p2) -> p1.age > p2.age ? p1 : p2)
+    .ifPresent(System.out::println);    // Pamela
+```
+`reduce`方法接受一个`BinaryOperator`累加函数.那是一个真正的`BiFunction`，两个操作符分享同样的类型.在这个案例中是`Person`。`BiFunction`像`Function`,但是必须接受两个参数.示例函数比较两个人的年龄，选择其中一个较大年龄的.
